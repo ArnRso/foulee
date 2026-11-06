@@ -1,4 +1,10 @@
 # Vérifications obligatoires avant toute fusion dans main : formatage, tests, compilation stricte.
+#
+# Formatage et tests de FTMSKit (sans AppKit ni CoreBluetooth) tournent sur Linux, dans l'image
+# Swift officielle : les machines Linux de GitHub démarrent aussitôt, alors que les machines macOS
+# manquent parfois. Seule la compilation de l'app a besoin de macOS et d'Xcode.
+# L'image est épinglée par empreinte, à la version de Swift utilisée en local (swift --version) :
+# la mettre à jour à la main avec la chaîne d'outils du Mac.
 name: CI
 
 on:
@@ -16,21 +22,19 @@ concurrency:
 jobs:
   format:
     name: Formatage (swift format)
-    runs-on: macos-26
+    runs-on: ubuntu-24.04
+    container: swift:6.4.2-noble@sha256:bca121f6eb59fd80340d1296887b2698ed8f3eb9eca7d80c181f8af769dc7ee0
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Sélectionner la version d'Xcode la plus récente
-        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
       - name: Vérifier le formatage et les règles de style
         run: scripts/lint.sh
 
   tests:
     name: Tests (FTMSKit)
-    runs-on: macos-26
+    runs-on: ubuntu-24.04
+    container: swift:6.4.2-noble@sha256:bca121f6eb59fd80340d1296887b2698ed8f3eb9eca7d80c181f8af769dc7ee0
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Sélectionner la version d'Xcode la plus récente
-        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
       - name: Tests (avertissements bloquants, puis sous Address Sanitizer)
         run: scripts/test.sh
 

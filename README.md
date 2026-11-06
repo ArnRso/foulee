@@ -142,6 +142,15 @@ Règles les plus strictes, vérifiées par la CI ([ci.yml](.github/workflows/ci.
 - **Compilation** : Swift 6 en concurrence stricte, sûreté mémoire explicite (`unsafe`),
   `ExistentialAny`, `InternalImportsByDefault`, `MemberImportVisibility`, avertissements bloquants
 - **Dépendances** : Dependabot propose chaque semaine les mises à jour de Sparkle, KeyboardShortcuts et des actions GitHub
+- **Machines de la CI** : formatage et tests tournent sur Linux, dans l'image Swift officielle
+  épinglée à la version utilisée en local (`swift --version`, à mettre à jour à la main dans
+  `ci.yml` avec la chaîne d'outils du Mac) ; seule la compilation de l'app utilise une machine
+  macOS, parfois longue à obtenir chez GitHub. Pour reproduire la CI Linux en local (le volume
+  `foulee-linux-build` garde la compilation Linux à part de celle du Mac) :
+
+  ```sh
+  docker run --rm -v "$PWD":/src -v foulee-linux-build:/src/Packages/FTMSKit/.build -w /src swift:6.4.2-noble scripts/test.sh
+  ```
 
 ## Compiler et lancer
 
