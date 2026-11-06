@@ -1,193 +1,208 @@
 # Foulée
 
-Pilote un tapis de marche Bluetooth depuis la barre des menus de macOS : vitesse, distance,
-temps et énergie en direct, démarrage, pause, arrêt et réglage de la vitesse.
+**Pilotez votre tapis de marche depuis la barre des menus de votre Mac.**
 
-Repose sur le protocole standard FTMS (Fitness Machine Service, `0x1826`) via CoreBluetooth.
-Validé sur un tapis à module FitShow (`FS-37FBED`) ; le protocole et les trames relevées sont
-documentés dans le [POC Python](poc/README.md).
+Foulée se connecte en Bluetooth à votre tapis de marche : vous voyez votre vitesse, votre
+distance, votre temps et vos calories en direct, vous démarrez, mettez en pause et changez de
+vitesse d'un clic ou d'un raccourci clavier, sans quitter ce que vous faites. Chaque séance est
+enregistrée, et une fenêtre de statistiques retrace vos journées, vos semaines et vos mois de
+marche.
+
+Idéal pour un tapis sous un bureau assis-debout : vous marchez, vous travaillez, Foulée reste
+discrète dans la barre des menus.
+
+[**Télécharger la dernière version**](https://github.com/ArnRso/foulee/releases/latest)
+· macOS 15 ou plus récent · Mac Apple Silicon ou Intel · Gratuit et open source
+
+## Ce que fait Foulée
+
+- **En direct** : vitesse, distance, temps de marche et énergie dépensée, dans un menu qui
+  s'ouvre d'un clic. La vitesse s'affiche aussi à côté de l'icône pendant que vous marchez.
+- **Pilotage** : démarrer, mettre en pause, reprendre, arrêter, accélérer ou ralentir au
+  dixième de km/h près.
+- **Ralentir d'un geste** : un bouton passe le tapis à vitesse lente (pour un appel, une
+  réunion…), puis le ramène à votre vitesse d'avant.
+- **Raccourcis clavier** : toutes les commandes sont accessibles depuis n'importe quelle app,
+  et les raccourcis se changent dans les Réglages.
+- **Séances enregistrées** : chaque séance est gardée, seconde par seconde, dans un dossier
+  iCloud Drive, donc sauvegardée et retrouvée sur vos autres Mac.
+- **Statistiques** : totaux du jour, de la semaine, du mois et depuis le début, histogrammes,
+  et pour chaque séance la courbe de vitesse et l'heure de chaque accélération, pause ou reprise.
+- **Garde-fous** : une vitesse maximale que Foulée ne dépasse jamais, et l'arrêt du tapis quand
+  vous quittez l'app.
+- **Mises à jour automatiques** : Foulée vous propose les nouvelles versions d'elle-même.
+
+## Tapis compatibles
+
+Foulée fonctionne avec les tapis qui parlent le protocole Bluetooth standard des appareils de
+fitness, **FTMS** (Fitness Machine Service). C'est le cas de nombreux tapis récents, notamment
+ceux équipés d'un module FitShow, dont le nom Bluetooth commence par `FS-`.
+
+Indices que votre tapis est compatible : il se connecte à des applis comme Zwift ou Kinomap, ou
+sa fiche technique mentionne « FTMS ». En cas de doute, essayez : si Foulée trouve votre tapis
+et affiche sa vitesse, c'est bon signe.
+
+Foulée a été mise au point sur un tapis de marche à module FitShow. Les tapis à inclinaison
+motorisée sont reconnus, mais Foulée ne pilote pas encore l'inclinaison.
 
 ## Installer
 
-Télécharger le `.dmg` de la [dernière release](https://github.com/ArnRso/foulee/releases/latest), l'ouvrir et
-glisser Foulée dans Applications. L'app n'est pas notarisée : au premier lancement, macOS la bloque ;
-l'autoriser dans Réglages Système › Confidentialité et sécurité › « Ouvrir quand même ».
+1. Téléchargez **`Foulee-….dmg`** depuis la
+   [dernière version](https://github.com/ArnRso/foulee/releases/latest), ouvrez-le et glissez
+   **Foulée** dans le dossier **Applications**.
+2. Lancez Foulée. Elle n'est pas notarisée par Apple : la première fois, macOS refuse de
+   l'ouvrir. Allez dans **Réglages Système › Confidentialité et sécurité** et cliquez sur
+   **Ouvrir quand même**. Ou, dans le Terminal :
 
-Le tapis n'accepte qu'une connexion à la fois : fermer l'appli du fabricant sur le téléphone.
+   ```sh
+   xattr -dr com.apple.quarantine /Applications/Foulee.app
+   ```
 
-## Sécurité du pilotage
+3. Acceptez l'**autorisation Bluetooth** que demande macOS.
 
-Quelqu'un marche sur le tapis : toute commande passe par des garde-fous.
+## Premiers pas
 
-- Chaque consigne de vitesse est arrondie au pas du tapis et bornée par sa plage (`0x2AD4`)
-  et par la **vitesse maximale** choisie dans les Réglages (4 km/h par défaut). La télécommande
-  du tapis n'est pas bornée.
-- Quitter Foulée envoie Stop au tapis avant de se déconnecter.
-- Une perte de connexion est signalée (icône ⚠︎ et bip si le tapis tournait) :
-  **le tapis continue alors de tourner**, l'arrêter à la télécommande. Foulée se reconnecte seul.
-- Après une pause, une reprise ou un arrêt, le tapis repart à sa vitesse minimale : la consigne
-  précédente est oubliée, les boutons + et − repartent de la vitesse réelle.
+1. **Allumez le tapis** et **fermez l'appli du fabricant** sur votre téléphone (ou coupez le
+   Bluetooth du téléphone) : un tapis n'accepte qu'une connexion à la fois.
+2. Cliquez sur l'icône de marcheur dans la barre des menus. Foulée cherche le tapis, s'y
+   connecte et en prend le contrôle : son nom s'affiche avec un point vert.
+3. Cliquez sur **Démarrer**. Le tapis part à sa vitesse minimale ; réglez-la avec **+** et **−**.
 
-## Pilotage
+La première fois, ouvrez aussi les **Réglages** (menu › Réglages…) pour choisir votre vitesse
+maximale.
 
-- **Démarrer / Pause / Reprendre / Arrêter**, sans confirmation.
-- **+ et −** : changent la vitesse de l'incrément choisi (0,1 km/h par défaut, jamais plus fin
-  que le pas du tapis).
-- **Bascule lente** (tortue / lièvre) : passe à la vitesse lente (1 km/h par défaut), puis
-  revient à la vitesse quittée. Si la vitesse a été changée entre-temps, la bascule ralentit à
-  nouveau depuis la nouvelle vitesse.
+## Utilisation
 
-### Réglages (⌘,)
+### Le menu
 
-Vitesse maximale, incrément des boutons, vitesse lente, raccourcis clavier, dossier des
-séances, ouverture à la connexion et recherche automatique des mises à jour.
+| Bouton | Effet |
+|---|---|
+| **Démarrer** / **Reprendre** | Lance le tapis, ou le relance après une pause. |
+| **Pause** | Arrête la bande en gardant la distance et le temps de la séance. |
+| **Arrêter** | Termine la séance : le tapis remet ses compteurs à zéro. |
+| **−** / **+** | Ralentit ou accélère (de 0,1 km/h par défaut). |
+| 🐢 **1,0 km/h** | Passe à la vitesse lente. Le bouton devient 🐇 et affiche votre vitesse d'avant : un clic vous y ramène. |
+
+Après une pause ou un arrêt, le tapis repart toujours à sa vitesse minimale.
 
 ### Raccourcis clavier
 
-Globaux (actifs dans toutes les apps), modifiables dans les Réglages, via
-[KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts) (sans autorisation
-d'accessibilité) :
+Ils fonctionnent dans toutes les apps, même quand le menu de Foulée est fermé :
 
-| Action | Par défaut |
+| Action | Raccourci par défaut |
 |---|---|
 | Démarrer / pause | ⌃⌥ Espace |
 | Accélérer | ⌃⌥ ↑ |
 | Ralentir | ⌃⌥ ↓ |
-| Bascule vitesse lente | ⌃⌥ L |
+| Vitesse lente / vitesse d'avant | ⌃⌥ L |
 | Arrêter | ⌃⌥ S |
 
-## Séances
+(⌃ = Contrôle, ⌥ = Option.) Changez-les dans les Réglages. Si Foulée n'est pas connectée au
+tapis, un raccourci émet simplement un bip.
 
-Chaque séance est enregistrée dans un fichier JSON, par défaut dans **iCloud Drive › Foulee**
-(ou Documents › Foulee si iCloud Drive est désactivé) ; le dossier se change depuis le menu.
-Dossier et fichiers ont des noms ASCII sans espace (`session_2026-11-06_15-16-23.json`, heure
-locale du début) ; les séances de l'ancien dossier `Foulée` y sont reprises au lancement.
-Foulée n'est pas sandboxée : elle écrit directement dans le dossier iCloud Drive, sans conteneur
-iCloud ni entitlement, ce qui reste compatible avec la signature ad hoc des releases.
+### Réglages
 
-- Une séance commence quand la bande se met à tourner (depuis Foulée ou la télécommande) et se
-  termine quand le tapis signale un arrêt ou remet ses compteurs à zéro. Les pauses et les pertes
-  de connexion ne la coupent pas.
-- Le fichier contient les totaux (distance, temps de marche, énergie, vitesses moyenne et
-  maximale) et un relevé par seconde. Il est sauvegardé toutes les 30 secondes pendant la marche.
-- Format compact (version 3) : JSON sans indentation, relevés rangés en colonnes
-  (`sampleColumns` : un tableau par mesure), environ 120 Ko par heure de marche. Les fichiers
-  des versions précédentes sont relus, et réécrits au format compact à leur première lecture.
+Menu › **Réglages…** :
 
-### Pourquoi des fichiers JSON et pas une base SQLite
+- **Vitesse maximale** : Foulée ne demande jamais plus au tapis (4 km/h au départ).
+- **Incrément** des boutons + et − : 0,1, 0,2, 0,5 ou 1 km/h.
+- **Vitesse lente** du bouton tortue (1 km/h au départ).
+- **Raccourcis clavier**.
+- **Dossier des séances**.
+- **Ouvrir Foulée à la connexion** au Mac, et recherche automatique des mises à jour.
 
-iCloud Drive synchronise des fichiers entiers, sans rien savoir de leur contenu : une base
-SQLite modifiée sur place (avec ses fichiers `-wal` et `-shm`) peut être corrompue par une
-synchronisation au milieu d'une écriture ou par deux Mac qui l'écrivent, et toutes les séances
-seraient perdues. Un fichier par séance, écrit d'un bloc, ne risque au pire qu'un conflit sur
-une seule séance, et reste lisible par n'importe quel outil.
+## Votre sécurité
 
-### Index local
+Quelqu'un marche sur le tapis : Foulée est prudente.
 
-Les totaux de chaque séance sont gardés dans un index, dans les caches de l'app
-(`~/Library/Caches/com.arnrso.foulee/index.json`, jamais synchronisé : chaque Mac a le sien).
-À l'ouverture des statistiques, seuls les fichiers nouveaux ou modifiés (date et taille) sont
-décodés ; les relevés d'une séance ne sont lus qu'à l'ouverture de son détail. L'index peut
-être supprimé sans risque : il est reconstruit à la lecture suivante.
-- Une séance interrompue par la fermeture de Foulée est enregistrée avec `isInterrupted`.
-- Les séances de moins de 10 m et d'une minute ne sont pas conservées.
-- Le fichier contient aussi les événements (démarrage, pause, arrêt, consignes de vitesse
-  envoyées par Foulée, pertes de connexion). Les changements de vitesse faits à la télécommande
-  ne sont pas signalés par le tapis : ils sont retrouvés dans les relevés.
+- Toute vitesse demandée par Foulée (boutons, raccourcis, vitesse lente) est limitée à votre
+  **vitesse maximale** et à la plage du tapis. La télécommande du tapis, elle, n'est pas
+  limitée par Foulée.
+- **Quitter Foulée arrête le tapis.**
+- Si la **connexion Bluetooth est perdue**, l'icône devient ⚠︎ et le Mac émet un bip : **le tapis
+  continue alors de tourner à sa dernière vitesse**. Arrêtez-le à la télécommande ou avec le
+  bouton du tapis. Foulée se reconnecte toute seule dès que possible.
+- Gardez toujours la clé de sécurité du tapis accrochée à vous.
 
-### Statistiques
+## Séances et statistiques
 
-Menu › Statistiques… ouvre une fenêtre qui présente toutes les séances du dossier :
+### Où sont vos séances
+
+Chaque séance est enregistrée dans **iCloud Drive › Foulee** (ou Documents › Foulee si iCloud
+Drive est désactivé), un fichier par séance, nommé d'après sa date :
+`session_2026-11-06_15-16-23.json`. Changez de dossier dans les Réglages.
+
+- Une séance commence quand la bande se met à tourner, que ce soit depuis Foulée ou depuis la
+  télécommande, et se termine à l'arrêt du tapis. Les pauses ne la coupent pas.
+- Elle est sauvegardée toutes les 30 secondes : un plantage ne vous fait pas perdre votre marche.
+- Les séances de moins d'une minute et de moins de 10 mètres ne sont pas gardées.
+- Les fichiers sont au format JSON, lisibles par d'autres outils si vous voulez exploiter vos
+  données vous-même.
+
+### La fenêtre Statistiques
+
+Menu › **Statistiques…** :
 
 - **Vue d'ensemble** : totaux d'aujourd'hui, de la semaine, du mois et depuis le début ;
-  histogramme par jour (30 derniers), semaine ou mois (12 derniers) de la distance, du temps,
-  de l'énergie ou du nombre de séances ; tableau détaillé de chaque période.
-- **Séance** : totaux, courbe de vitesse avec les événements, et chronologie heure par heure
-  de chaque accélération et décélération (de combien à combien), pause, reprise et arrêt.
-- **En cours** : la séance en cours apparaît en tête de liste et dans les totaux, mise à jour
-  à chaque relevé du tapis (environ une fois par seconde) ; à l'arrêt, elle rejoint les séances
-  enregistrées sans changer de vue.
+  histogramme des 30 derniers jours, des 12 dernières semaines ou des 12 derniers mois, en
+  distance, temps, énergie ou nombre de séances ; tableau détaillé par période.
+- **Une séance** : distance, temps de marche, énergie, vitesses moyenne et maximale, courbe de
+  vitesse, et chronologie de chaque accélération (« 2,0 → 2,5 km/h à 15 h 16 »), pause, reprise
+  et arrêt, y compris ceux faits à la télécommande.
+- **Séance en cours** : elle apparaît en tête de liste et se met à jour en direct.
 
-## Publier une version
+### Vos données
 
-Pousser un tag `v…` : GitHub Actions ([release.yml](.github/workflows/release.yml)) compile l'app,
-produit le `.zip` et le `.dmg` (signés ad hoc) et crée la release avec les notes de
-[Support/release-notes.md](Support/release-notes.md).
+Foulée ne collecte rien et n'envoie rien : vos séances restent dans votre dossier. La seule
+connexion à Internet est la vérification quotidienne des mises à jour, sur GitHub.
 
-```sh
-git tag v0.1.0
-git push origin v0.1.0
-```
+## Mises à jour
 
-En local, `scripts/package.sh 0.1.0` produit les mêmes fichiers dans `dist/`.
+Foulée vérifie chaque jour s'il existe une nouvelle version et vous la propose dans son menu.
+Vous pouvez aussi vérifier à la main : menu › **Rechercher les mises à jour…**. Chaque mise à
+jour est signée : Foulée refuse toute version qui ne vient pas de ce projet.
 
-### Mises à jour automatiques (Sparkle)
+Après une mise à jour, macOS peut redemander l'autorisation Bluetooth.
 
-Foulée vérifie chaque jour `appcast.xml`, publié avec chaque release. La CI signe le `.zip` avec la clé
-privée EdDSA (secret `SPARKLE_PRIVATE_KEY`) ; l'app n'accepte que les mises à jour signées par la clé
-correspondant à `SUPublicEDKey` (Info.plist). Perdre la clé privée empêche toute mise à jour
-des versions installées : la conserver en lieu sûr.
-L'icône et le fond du `.dmg` sont générés par `swift scripts/make-artwork.swift`.
+## En cas de problème
 
-## Qualité du code
+**Foulée ne trouve pas le tapis**
+- Vérifiez que l'appli du fabricant est fermée sur votre téléphone, ou coupez le Bluetooth du
+  téléphone : le tapis ne s'annonce plus quand un appareil y est déjà connecté.
+- Réveillez le tapis (télécommande ou bouton) : certains se mettent en veille.
+- Vérifiez que le Bluetooth du Mac est activé.
 
-Règles les plus strictes, vérifiées par la CI ([ci.yml](.github/workflows/ci.yml)) sur chaque pull request :
-
-- **Tests** : le protocole FTMS (décodage des trames, encodage des commandes, bornage de la vitesse,
-  découpage en séances)
-  vit dans le package local [FTMSKit](Packages/FTMSKit), testé avec Swift Testing sur des trames
-  réelles du tapis, y compris sous Address Sanitizer : `scripts/test.sh`
-- **Formatage et style** : `swift format` avec toutes les règles activées ([.swift-format](.swift-format)) :
-  `scripts/lint.sh` pour vérifier, `scripts/lint.sh --fix` pour reformater
-- **Compilation** : Swift 6 en concurrence stricte, sûreté mémoire explicite (`unsafe`),
-  `ExistentialAny`, `InternalImportsByDefault`, `MemberImportVisibility`, avertissements bloquants
-- **Dépendances** : Dependabot propose chaque semaine les mises à jour de Sparkle, KeyboardShortcuts et des actions GitHub
-- **Machines de la CI** : formatage et tests tournent sur Linux, dans l'image Swift officielle
-  épinglée à la version utilisée en local (`swift --version`, à mettre à jour à la main dans
-  `ci.yml` avec la chaîne d'outils du Mac) ; seule la compilation de l'app utilise une machine
-  macOS, parfois longue à obtenir chez GitHub. Pour reproduire la CI Linux en local (le volume
-  `foulee-linux-build` garde la compilation Linux à part de celle du Mac) :
-
-  ```sh
-  docker run --rm -v "$PWD":/src -v foulee-linux-build:/src/Packages/FTMSKit/.build -w /src swift:6.4.2-noble scripts/test.sh
-  ```
-
-## Compiler et lancer
-
-Avec Xcode : ouvrir `Foulee.xcodeproj` et lancer le schéma **Foulee** (⌘R).
-Pour signer avec son Apple ID, choisir son équipe dans la cible Foulee → Signing & Capabilities.
-
-En ligne de commande (Release, dans `build/Foulee.app`) :
-
-```sh
-./build.sh
-open build/Foulee.app
-```
-
-Pour un usage quotidien, installer dans `/Applications` puis cocher « Ouvrir Foulée à la connexion »
-dans le menu de Foulée :
-
-```sh
-./build.sh --install
-open /Applications/Foulee.app
-```
-
-Au premier démarrage, macOS demande l'autorisation Bluetooth
-(Réglages Système → Confidentialité et sécurité → Bluetooth).
-Sans équipe choisie, `build.sh` signe en ad hoc et la demande peut revenir après chaque compilation ; pour la réinitialiser :
+**« Bluetooth indisponible »**
+Autorisez Foulée dans **Réglages Système › Confidentialité et sécurité › Bluetooth**. Si la
+demande ne réapparaît pas :
 
 ```sh
 tccutil reset BluetoothAlways com.arnrso.foulee
 ```
 
-Journaux : `log stream --predicate 'subsystem == "com.arnrso.foulee"'`
+**Le tapis refuse le contrôle (point orange)**
+Une autre appli est probablement connectée au tapis : fermez-la, puis cliquez sur **Prendre le
+contrôle du tapis** dans le menu.
+
+**Autre chose**
+Menu › **Diagnostic…** affiche ce que le tapis annonce et le journal des échanges. Le bouton
+**Copier le diagnostic** le met dans le presse-papiers, prêt à joindre à un signalement.
+
+## Signaler un problème, proposer une idée
+
+[Ouvrez une issue](https://github.com/ArnRso/foulee/issues/new/choose) en indiquant la version de
+Foulée, celle de macOS, votre modèle de tapis, et en collant le diagnostic. Pour une faille de
+sécurité, utilisez plutôt le [signalement privé](SECURITY.md).
+
+Envie de contribuer au code ? Tout est expliqué dans [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licence
 
-Foulée est distribué sous licence [GNU GPL 3.0](LICENSE) : vous pouvez l'utiliser, l'étudier, le modifier
-et le redistribuer, à condition que toute version distribuée reste sous GPL 3.0 avec son code source.
+Foulée est un logiciel libre, sous licence [GNU GPL 3.0](LICENSE) : vous pouvez l'utiliser,
+l'étudier, le modifier et le redistribuer, à condition que toute version distribuée reste sous
+GPL 3.0 avec son code source.
 
-Composants tiers : [Sparkle](https://sparkle-project.org) (licences MIT, BSD et zlib) et
-[KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts) (licence MIT), reproduites dans
-[Foulee/Legal/ThirdPartyNotices.txt](Foulee/Legal/ThirdPartyNotices.txt)). La licence de Foulée et celles des
-composants tiers sont incluses dans l'app (`Foulee.app/Contents/Resources`).
+Foulée utilise [Sparkle](https://sparkle-project.org) pour ses mises à jour et
+[KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts) pour ses raccourcis
+clavier ; leurs licences sont reproduites dans
+[ThirdPartyNotices.txt](Foulee/Legal/ThirdPartyNotices.txt) et incluses dans l'app.
