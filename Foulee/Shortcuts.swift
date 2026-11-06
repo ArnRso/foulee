@@ -68,22 +68,22 @@ enum ShortcutAction: CaseIterable, Identifiable {
 extension KeyboardShortcuts.Name {
     static let togglePause = Self(
         "basculerPause",
-        default: .init(.space, modifiers: [.control, .option]),
+        initial: .init(.space, modifiers: [.control, .option]),
     )
     static let speedUp = Self(
         "accelerer",
-        default: .init(.upArrow, modifiers: [.control, .option]),
+        initial: .init(.upArrow, modifiers: [.control, .option]),
     )
     static let speedDown = Self(
         "ralentir",
-        default: .init(.downArrow, modifiers: [.control, .option]),
+        initial: .init(.downArrow, modifiers: [.control, .option]),
     )
     static let toggleSlowSpeed = Self(
         "basculerVitesseLente",
-        default: .init(.l, modifiers: [.control, .option]),
+        initial: .init(.l, modifiers: [.control, .option]),
     )
     static let stopBelt = Self(
         "arreter",
-        default: .init(.s, modifiers: [.control, .option]),
+        initial: .init(.s, modifiers: [.control, .option]),
     )
 }
