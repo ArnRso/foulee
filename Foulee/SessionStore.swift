@@ -4,12 +4,20 @@ import Foundation
 import Observation
 
 /// Enregistre chaque séance dans un fichier JSON, par défaut dans iCloud Drive › Foulee, et
-/// relit toutes les séances du dossier pour les statistiques.
+/// tient la liste des séances pour les statistiques.
 ///
 /// Foulée n'est pas sandboxée : elle écrit directement dans le dossier iCloud Drive de
 /// l'utilisateur, que macOS synchronise ensuite, sans conteneur iCloud ni entitlement (qui
 /// exigeraient une signature par une équipe Apple, incompatible avec les builds ad hoc).
 /// Dossier et fichiers ont des noms ASCII sans espace, sûrs sur tous les systèmes.
+///
+/// Un fichier par séance plutôt qu'une base SQLite : iCloud Drive synchronise des fichiers
+/// entiers et peut corrompre une base modifiée sur place, alors qu'un fichier JSON écrit d'un
+/// bloc ne risque, au pire, qu'un conflit sur une seule séance.
+///
+/// Pour ne pas relire tous les relevés à chaque ouverture des statistiques, les totaux de chaque
+/// séance sont gardés dans un index local (dans les caches de l'app, jamais synchronisé) : seuls
+/// les fichiers nouveaux ou modifiés depuis la dernière lecture sont décodés.
 @MainActor
 @Observable
 final class SessionStore {
@@ -22,12 +30,14 @@ final class SessionStore {
     private nonisolated static let folderName = "Foulee"
 
     private(set) var folder: URL
-    /// Séances du dossier, de la plus récente à la plus ancienne.
-    private(set) var sessions: [TreadmillSession] = []
+    /// Totaux des séances du dossier, de la plus récente à la plus ancienne.
+    private(set) var sessions: [SessionSummary] = []
     /// Fichiers encore dans le nuage iCloud, en cours de téléchargement.
     private(set) var pendingDownloads = 0
     private(set) var isLoading = false
     private(set) var error: String?
+
+    @ObservationIgnored private var index = SessionIndex()
 
     init() {
         let stored = UserDefaults.standard.string(forKey: DefaultsKey.folder)
@@ -76,54 +86,88 @@ final class SessionStore {
     /// Séance terminée : enregistrée si elle vaut la peine, sinon sa sauvegarde intermédiaire
     /// éventuelle est supprimée.
     func store(_ session: TreadmillSession) {
+        let file = Self.fileURL(startingAt: session.startDate, in: folder)
+        sessions.removeAll { $0.id == session.id }
         guard session.isWorthKeeping else {
-            try? FileManager.default.removeItem(at: Self.fileURL(for: session, in: folder))
-            sessions.removeAll { $0.id == session.id }
+            try? FileManager.default.removeItem(at: file)
+            index.entries[file.lastPathComponent] = nil
+            index.save()
             return
         }
         guard save(session) else { return }
-        sessions.removeAll { $0.id == session.id }
-        let index = sessions.firstIndex { $0.startDate < session.startDate } ?? sessions.endIndex
-        sessions.insert(session, at: index)
+        let summary = session.summary
+        let position = sessions.firstIndex { $0.startDate < summary.startDate } ?? sessions.endIndex
+        sessions.insert(summary, at: position)
+        if let entry = SessionIndex.Entry(file: file, summary: summary) {
+            index.entries[file.lastPathComponent] = entry
+            index.save()
+        }
     }
 
     // MARK: - Lecture
 
-    /// Relit toutes les séances du dossier, hors du fil principal.
+    /// Met à jour la liste des séances, hors du fil principal : seuls les fichiers nouveaux ou
+    /// modifiés depuis la dernière lecture sont décodés.
     func reload() async {
         guard !isLoading else { return }
         isLoading = true
         defer { isLoading = false }
         let folder = folder
         let useLegacyFolder = UserDefaults.standard.string(forKey: DefaultsKey.folder) == nil
+        let cached =
+            index.folder == folder.path(percentEncoded: false) ? index : SessionIndex.load()
         let result = await Task.detached(priority: .userInitiated) {
             if useLegacyFolder {
                 Self.migrateLegacyFolder(into: folder)
             }
-            return Self.readSessions(in: folder)
+            return Self.readSessions(in: folder, cached: cached)
         }
         .value
-        sessions = result.sessions
+        index = result.index
+        sessions = result.index.entries.values.map(\.summary).sorted { $0.startDate > $1.startDate }
         pendingDownloads = result.pendingDownloads
         error =
             result.unreadable.isEmpty
             ? nil : "Fichiers illisibles : \(result.unreadable.joined(separator: ", "))"
     }
 
+    /// Relit une séance complète (relevés compris), hors du fil principal.
+    ///
+    /// - Throws: si le fichier est illisible ; un fichier resté dans le nuage iCloud est mis en
+    ///   téléchargement et l'erreur l'indique.
+    func loadSession(_ summary: SessionSummary) async throws -> TreadmillSession {
+        let file = Self.fileURL(startingAt: summary.startDate, in: folder)
+        return try await Task.detached(priority: .userInitiated) {
+            do {
+                return try Self.decoder.decode(TreadmillSession.self, from: Data(contentsOf: file))
+            } catch {
+                try? FileManager.default.startDownloadingUbiquitousItem(at: file)
+                throw error
+            }
+        }
+        .value
+    }
+
     private struct ReadResult: Sendable {
-        var sessions: [TreadmillSession] = []
+        var index: SessionIndex
         var pendingDownloads = 0
         var unreadable: [String] = []
     }
 
-    /// Lit les fichiers JSON du dossier ; un fichier mal nommé (ancienne version de Foulée)
-    /// est renommé, un fichier resté dans le nuage est téléchargé pour la prochaine lecture.
-    private nonisolated static func readSessions(in folder: URL) -> ReadResult {
-        var result = ReadResult()
+    /// Parcourt le dossier en ne décodant que les fichiers nouveaux ou modifiés.
+    ///
+    /// Les fichiers inchangés depuis la dernière lecture gardent leur résumé en cache ; les
+    /// autres sont décodés, renommés ou réécrits au format compact si besoin. Un fichier resté
+    /// dans le nuage est téléchargé pour la prochaine lecture.
+    private nonisolated static func readSessions(in folder: URL, cached: SessionIndex) -> ReadResult
+    {
+        var index = SessionIndex(folder: folder.path(percentEncoded: false))
+        let cached = cached.folder == index.folder ? cached : SessionIndex()
+        var result = ReadResult(index: index)
         let files =
             (try? FileManager.default.contentsOfDirectory(
                 at: folder,
-                includingPropertiesForKeys: nil,
+                includingPropertiesForKeys: SessionIndex.Entry.resourceKeys,
             )) ?? []
         for file in files {
             let name = file.lastPathComponent
@@ -132,25 +176,41 @@ final class SessionStore {
                 let original = folder.appending(path: String(name.dropFirst().dropLast(7)))
                 try? FileManager.default.startDownloadingUbiquitousItem(at: original)
                 result.pendingDownloads += 1
+                if let entry = cached.entries[original.lastPathComponent] {
+                    index.entries[original.lastPathComponent] = entry
+                }
                 continue
             }
             guard file.pathExtension == "json" else { continue }
+            if let entry = cached.entries[name], entry.matches(file) {
+                index.entries[name] = entry
+                continue
+            }
             do {
-                var session = try decoder.decode(
+                let session = try decoder.decode(
                     TreadmillSession.self,
                     from: Data(contentsOf: file),
                 )
-                if name != fileURL(for: session, in: folder).lastPathComponent {
-                    session.formatVersion = TreadmillSession.formatVersion
+                let expected = fileURL(startingAt: session.startDate, in: folder)
+                if expected.lastPathComponent != name
+                    || session.formatVersion < TreadmillSession.formatVersion
+                {
                     try write(session, in: folder)
-                    try FileManager.default.removeItem(at: file)
+                    if expected.lastPathComponent != name {
+                        try FileManager.default.removeItem(at: file)
+                    }
                 }
-                result.sessions.append(session)
+                if let entry = SessionIndex.Entry(file: expected, summary: session.summary) {
+                    index.entries[expected.lastPathComponent] = entry
+                }
             } catch {
                 result.unreadable.append(name)
             }
         }
-        result.sessions.sort { $0.startDate > $1.startDate }
+        if index != cached {
+            index.save()
+        }
+        result.index = index
         return result
     }
 
@@ -168,9 +228,8 @@ final class SessionStore {
         else { return }
         for file in files where file.pathExtension == "json" {
             guard let data = try? Data(contentsOf: file),
-                var session = try? decoder.decode(TreadmillSession.self, from: data)
+                let session = try? decoder.decode(TreadmillSession.self, from: data)
             else { continue }
-            session.formatVersion = TreadmillSession.formatVersion
             if (try? write(session, in: folder)) != nil {
                 try? FileManager.default.removeItem(at: file)
             }
@@ -190,20 +249,22 @@ final class SessionStore {
         return decoder
     }
 
+    /// JSON compact (sans indentation) : les relevés représentent l'essentiel du fichier.
     private nonisolated static func write(_ session: TreadmillSession, in folder: URL) throws {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.outputFormatting = .sortedKeys
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        try encoder.encode(session).write(to: fileURL(for: session, in: folder), options: .atomic)
+        try encoder.encode(session)
+            .write(to: fileURL(startingAt: session.startDate, in: folder), options: .atomic)
     }
 
     /// `session_2026-11-06_15-16-23.json`, à l'heure locale du début de la séance.
-    private nonisolated static func fileURL(for session: TreadmillSession, in folder: URL) -> URL {
+    private nonisolated static func fileURL(startingAt date: Date, in folder: URL) -> URL {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
-        let name = "session_\(formatter.string(from: session.startDate)).json"
+        let name = "session_\(formatter.string(from: date)).json"
         return folder.appending(path: name, directoryHint: .notDirectory)
     }
 
@@ -227,5 +288,55 @@ final class SessionStore {
     func openFolder() {
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         NSWorkspace.shared.open(folder)
+    }
+}
+
+/// Index local des séances, simple cache reconstruit s'il est absent ou illisible.
+///
+/// Garde le résumé de chaque fichier, avec sa date de modification et sa taille pour savoir
+/// s'il a changé.
+private struct SessionIndex: Codable, Equatable, Sendable {
+    struct Entry: Codable, Equatable, Sendable {
+        static let resourceKeys: [URLResourceKey] = [.contentModificationDateKey, .fileSizeKey]
+
+        var modificationDate: Date
+        var size: Int
+        var summary: SessionSummary
+
+        init?(file: URL, summary: SessionSummary) {
+            guard let values = try? file.resourceValues(forKeys: Set(Self.resourceKeys)),
+                let modificationDate = values.contentModificationDate,
+                let size = values.fileSize
+            else { return nil }
+            self.modificationDate = modificationDate
+            self.size = size
+            self.summary = summary
+        }
+
+        func matches(_ file: URL) -> Bool {
+            let values = try? file.resourceValues(forKeys: Set(Self.resourceKeys))
+            return values?.contentModificationDate == modificationDate && values?.fileSize == size
+        }
+    }
+
+    /// Dossier des séances indexé : un autre dossier repart d'un index vide.
+    var folder = ""
+    var entries: [String: Entry] = [:]
+
+    private static var url: URL {
+        URL.cachesDirectory.appending(path: "com.arnrso.foulee/index.json")
+    }
+
+    static func load() -> SessionIndex {
+        (try? JSONDecoder().decode(SessionIndex.self, from: Data(contentsOf: url)))
+            ?? SessionIndex()
+    }
+
+    func save() {
+        try? FileManager.default.createDirectory(
+            at: Self.url.deletingLastPathComponent(),
+            withIntermediateDirectories: true,
+        )
+        try? JSONEncoder().encode(self).write(to: Self.url, options: .atomic)
     }
 }

@@ -133,6 +133,7 @@ struct SessionRecorderTests {
         var recorder = SessionRecorder()
         _ = try record(&recorder, second: 0, speed: 2, distance: 0, elapsed: 0)
         _ = try record(&recorder, second: 60, speed: 2.5, distance: 40, kcal: 3, elapsed: 60)
+        recorder.note(.targetSpeed, speedKmh: 2.5, at: start.addingTimeInterval(61))
         let finished = recorder.finish(interrupted: false)
         let session = try #require(finished)
 
@@ -145,5 +146,20 @@ struct SessionRecorderTests {
             from: try encoder.encode(session),
         )
         #expect(decoded == session)
+    }
+
+    @Test func roundsOffsetsToTenths() throws {
+        var recorder = SessionRecorder()
+        _ = recorder.record(
+            try frame(speed: 2, distance: 0, kcal: 0, elapsed: 0),
+            at: start,
+            deviceName: nil,
+        )
+        _ = recorder.record(
+            try frame(speed: 2, distance: 1, kcal: 0, elapsed: 1),
+            at: start.addingTimeInterval(1.234_567),
+            deviceName: nil,
+        )
+        #expect(recorder.current?.samples.map(\.offsetSeconds) == [0, 1.2])
     }
 }

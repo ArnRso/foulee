@@ -71,7 +71,7 @@ struct SessionStatisticsTests {
     }
 
     private func session(on date: Date, meters: Int, seconds: Int, kcal: Int? = 10)
-        -> TreadmillSession
+        -> SessionSummary
     {
         TreadmillSession(
             startDate: date,
@@ -81,6 +81,7 @@ struct SessionStatisticsTests {
             energyKcal: kcal,
             maximumSpeedKmh: 3,
         )
+        .summary
     }
 
     @Test func groupsByDayIncludingEmptyDays() throws {
@@ -179,5 +180,61 @@ struct SessionFormatTests {
         #expect(session.events.isEmpty)
         #expect(session.samples.count == 1)
         #expect(session.distanceMeters == 120)
+
+        // Réécrit au format actuel : relevés en colonnes.
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let rewritten = try decoder.decode(
+            TreadmillSession.self,
+            from: try encoder.encode(session),
+        )
+        #expect(rewritten.formatVersion == TreadmillSession.formatVersion)
+        #expect(rewritten.samples == session.samples)
+    }
+
+    @Test func writesSamplesAsColumns() throws {
+        let samples = (0..<3600).map { second in
+            TreadmillSession.Sample(
+                offsetSeconds: Double(second),
+                speedKmh: 3.5,
+                distanceMeters: second,
+                energyKcal: second / 20,
+                elapsedSeconds: second,
+            )
+        }
+        let session = TreadmillSession(
+            startDate: .distantPast,
+            endDate: .distantPast,
+            elapsedSeconds: 3600,
+            distanceMeters: 3500,
+            maximumSpeedKmh: 3.5,
+            samples: samples,
+        )
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        let data = try encoder.encode(session)
+        let json = try #require(String(data: data, encoding: .utf8))
+        #expect(json.contains("\"sampleColumns\""))
+        #expect(!json.contains("\"samples\""))
+        // Une heure de relevés : bien moins de 200 Ko (environ 600 Ko dans l'ancien format).
+        #expect(data.count < 200_000)
+        #expect(try JSONDecoder().decode(TreadmillSession.self, from: data).samples == samples)
+    }
+
+    @Test func rejectsColumnsOfDifferentLengths() {
+        let json = """
+            {
+              "distanceMeters" : 0, "elapsedSeconds" : 0, "endDate" : 0, "formatVersion" : 3,
+              "id" : "0E0F8C55-5C1C-4D58-9D86-7C1F4B1A3E7A", "isInterrupted" : false,
+              "maximumSpeedKmh" : 0, "startDate" : 0,
+              "sampleColumns" : {
+                "offsetSeconds" : [0, 1], "speedKmh" : [1], "distanceMeters" : [0, 1],
+                "energyKcal" : [null, null], "elapsedSeconds" : [0, 1]
+              }
+            }
+            """
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(TreadmillSession.self, from: Data(json.utf8))
+        }
     }
 }

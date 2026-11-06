@@ -47,8 +47,10 @@ public struct TreadmillSession: Codable, Equatable, Identifiable, Sendable {
 
     /// Version du format, à incrémenter si la structure du fichier change.
     ///
-    /// Version 2 : ajout de ``events`` (absent des fichiers en version 1).
-    public static let formatVersion = 2
+    /// - Version 2 : ajout de ``events`` (absent des fichiers en version 1).
+    /// - Version 3 : relevés enregistrés en colonnes (`sampleColumns`, un tableau par mesure)
+    ///   plutôt qu'en objets répétés (`samples`), environ 5 fois plus compact.
+    public static let formatVersion = 3
 
     /// Version du format de ce fichier.
     public var formatVersion = Self.formatVersion
@@ -87,8 +89,65 @@ public struct TreadmillSession: Codable, Equatable, Identifiable, Sendable {
     }
 }
 
-// Décodage écrit à la main pour relire les fichiers des versions précédentes du format.
+// Codage écrit à la main : relevés en colonnes, et relecture des versions précédentes.
 extension TreadmillSession {
+    private enum CodingKeys: String, CodingKey {
+        case formatVersion
+        case id
+        case deviceName
+        case startDate
+        case endDate
+        case elapsedSeconds
+        case distanceMeters
+        case energyKcal
+        case maximumSpeedKmh
+        case isInterrupted
+        case samples
+        case sampleColumns
+        case events
+    }
+
+    /// Relevés rangés par mesure : un tableau par colonne, tous de même longueur.
+    private struct SampleColumns: Codable {
+        var offsetSeconds: [Double]
+        var speedKmh: [Double]
+        var distanceMeters: [Int]
+        var energyKcal: [Int?]
+        var elapsedSeconds: [Int?]
+
+        init(_ samples: [Sample]) {
+            offsetSeconds = samples.map(\.offsetSeconds)
+            speedKmh = samples.map(\.speedKmh)
+            distanceMeters = samples.map(\.distanceMeters)
+            energyKcal = samples.map(\.energyKcal)
+            elapsedSeconds = samples.map(\.elapsedSeconds)
+        }
+
+        func samples(codingPath: [any CodingKey]) throws -> [Sample] {
+            let count = offsetSeconds.count
+            guard
+                [speedKmh.count, distanceMeters.count, energyKcal.count, elapsedSeconds.count]
+                    .allSatisfy({ $0 == count })
+            else {
+                throw DecodingError.dataCorrupted(
+                    .init(
+                        codingPath: codingPath,
+                        debugDescription: "Colonnes de longueurs différentes",
+                    )
+                )
+            }
+            return (0..<count).map { index in
+                Sample(
+                    offsetSeconds: offsetSeconds[index],
+                    speedKmh: speedKmh[index],
+                    distanceMeters: distanceMeters[index],
+                    energyKcal: energyKcal[index],
+                    elapsedSeconds: elapsedSeconds[index],
+                )
+            }
+        }
+    }
+
     /// Relit une séance enregistrée, quelle que soit la version de son format.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -102,8 +161,29 @@ extension TreadmillSession {
         energyKcal = try container.decodeIfPresent(Int.self, forKey: .energyKcal)
         maximumSpeedKmh = try container.decode(Double.self, forKey: .maximumSpeedKmh)
         isInterrupted = try container.decode(Bool.self, forKey: .isInterrupted)
-        samples = try container.decode([Sample].self, forKey: .samples)
+        if let columns = try container.decodeIfPresent(SampleColumns.self, forKey: .sampleColumns) {
+            samples = try columns.samples(codingPath: container.codingPath)
+        } else {
+            samples = try container.decode([Sample].self, forKey: .samples)
+        }
         events = try container.decodeIfPresent([Event].self, forKey: .events) ?? []
+    }
+
+    /// Écrit la séance au format actuel (``formatVersion``).
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(Self.formatVersion, forKey: .formatVersion)
+        try container.encode(id, forKey: .id)
+        try container.encodeIfPresent(deviceName, forKey: .deviceName)
+        try container.encode(startDate, forKey: .startDate)
+        try container.encode(endDate, forKey: .endDate)
+        try container.encode(elapsedSeconds, forKey: .elapsedSeconds)
+        try container.encode(distanceMeters, forKey: .distanceMeters)
+        try container.encodeIfPresent(energyKcal, forKey: .energyKcal)
+        try container.encode(maximumSpeedKmh, forKey: .maximumSpeedKmh)
+        try container.encode(isInterrupted, forKey: .isInterrupted)
+        try container.encode(SampleColumns(samples), forKey: .sampleColumns)
+        try container.encode(events, forKey: .events)
     }
 }
 
@@ -182,7 +262,7 @@ public struct SessionRecorder: Sendable {
         guard var session = current else { return }
         session.events.append(
             TreadmillSession.Event(
-                offsetSeconds: date.timeIntervalSince(session.startDate),
+                offsetSeconds: Self.offset(of: date, in: session),
                 kind: kind,
                 speedKmh: speedKmh,
             )
@@ -214,7 +294,7 @@ public struct SessionRecorder: Sendable {
         session.maximumSpeedKmh = max(session.maximumSpeedKmh, speed)
         session.samples.append(
             TreadmillSession.Sample(
-                offsetSeconds: date.timeIntervalSince(session.startDate),
+                offsetSeconds: Self.offset(of: date, in: session),
                 speedKmh: speed,
                 distanceMeters: distance,
                 energyKcal: data.totalEnergyKcal,
@@ -222,5 +302,11 @@ public struct SessionRecorder: Sendable {
             )
         )
         current = session
+    }
+
+    /// Secondes depuis le début de la séance, au dixième : plus fin ne servirait à rien et
+    /// alourdirait le fichier.
+    private static func offset(of date: Date, in session: TreadmillSession) -> Double {
+        (date.timeIntervalSince(session.startDate) * 10).rounded() / 10
     }
 }
