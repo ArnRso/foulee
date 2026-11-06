@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>fr</string>
+	<key>CFBundleDisplayName</key>
+	<string>Foulée</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Foulée</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>LSMinimumSystemVersion</key>
+	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>© 2026 Adrien Russo · Licence GNU GPL 3.0</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://github.com/ArnRso/foulee/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>NYn9VexuU+rlb8tra0Qluqkwh9ysVbOA4a6FNvLg1nI=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Foulée se connecte en Bluetooth à votre tapis de marche pour afficher vos données et piloter la vitesse.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Foulée enregistre vos séances de marche dans un dossier Foulée.</string>
+</dict>
+</plist>

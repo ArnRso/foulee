@@ -1,0 +1,331 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		F0F0F0F00000000000000090 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = F0F0F0F00000000000000092 /* Sparkle */; };
+		F0F0F0F00000000000000093 /* FTMSKit in Frameworks */ = {isa = PBXBuildFile; productRef = F0F0F0F00000000000000095 /* FTMSKit */; };
+		F0F0F0F00000000000000096 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = F0F0F0F00000000000000098 /* KeyboardShortcuts */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		F0F0F0F00000000000000001 /* Foulee.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Foulee.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F0F0F0F00000000000000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F0F0F0F00000000000000003 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		F0F0F0F00000000000000004 /* build.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = build.sh; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		F0F0F0F00000000000000010 /* Foulee */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Foulee;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F0F0F0F00000000000000020 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F0F0F0F00000000000000090 /* Sparkle in Frameworks */,
+				F0F0F0F00000000000000093 /* FTMSKit in Frameworks */,
+				F0F0F0F00000000000000096 /* KeyboardShortcuts in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		F0F0F0F00000000000000030 = {
+			isa = PBXGroup;
+			children = (
+				F0F0F0F00000000000000010 /* Foulee */,
+				F0F0F0F00000000000000031 /* Support */,
+				F0F0F0F00000000000000003 /* README.md */,
+				F0F0F0F00000000000000004 /* build.sh */,
+				F0F0F0F00000000000000032 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F0F0F0F00000000000000031 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				F0F0F0F00000000000000002 /* Info.plist */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+		F0F0F0F00000000000000032 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F0F0F0F00000000000000001 /* Foulee.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		F0F0F0F00000000000000040 /* Foulee */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F0F0F0F00000000000000070 /* Build configuration list for PBXNativeTarget "Foulee" */;
+			buildPhases = (
+				F0F0F0F00000000000000060 /* Sources */,
+				F0F0F0F00000000000000020 /* Frameworks */,
+				F0F0F0F00000000000000061 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F0F0F0F00000000000000010 /* Foulee */,
+			);
+			name = Foulee;
+			packageProductDependencies = (
+				F0F0F0F00000000000000092 /* Sparkle */,
+				F0F0F0F00000000000000095 /* FTMSKit */,
+				F0F0F0F00000000000000098 /* KeyboardShortcuts */,
+			);
+			productName = Foulee;
+			productReference = F0F0F0F00000000000000001 /* Foulee.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F0F0F0F00000000000000050 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					F0F0F0F00000000000000040 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+				};
+			};
+			buildConfigurationList = F0F0F0F00000000000000071 /* Build configuration list for PBXProject "Foulee" */;
+			developmentRegion = fr;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				fr,
+				Base,
+			);
+			mainGroup = F0F0F0F00000000000000030;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F0F0F0F00000000000000091 /* XCRemoteSwiftPackageReference "Sparkle" */,
+				F0F0F0F00000000000000094 /* XCLocalSwiftPackageReference "Packages/FTMSKit" */,
+				F0F0F0F00000000000000097 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = F0F0F0F00000000000000032 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F0F0F0F00000000000000040 /* Foulee */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F0F0F0F00000000000000061 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F0F0F0F00000000000000060 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		F0F0F0F00000000000000080 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		F0F0F0F00000000000000081 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		F0F0F0F00000000000000082 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = M6B3MU2T6V;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Support/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.arnrso.foulee;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_STRICT_MEMORY_SAFETY = YES;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_UPCOMING_FEATURE_EXISTENTIAL_ANY = YES;
+				SWIFT_UPCOMING_FEATURE_INTERNAL_IMPORTS_BY_DEFAULT = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		F0F0F0F00000000000000083 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = M6B3MU2T6V;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Support/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.arnrso.foulee;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_STRICT_MEMORY_SAFETY = YES;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_UPCOMING_FEATURE_EXISTENTIAL_ANY = YES;
+				SWIFT_UPCOMING_FEATURE_INTERNAL_IMPORTS_BY_DEFAULT = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F0F0F0F00000000000000070 /* Build configuration list for PBXNativeTarget "Foulee" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F0F0F0F00000000000000082 /* Debug */,
+				F0F0F0F00000000000000083 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F0F0F0F00000000000000071 /* Build configuration list for PBXProject "Foulee" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F0F0F0F00000000000000080 /* Debug */,
+				F0F0F0F00000000000000081 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		F0F0F0F00000000000000094 /* XCLocalSwiftPackageReference "Packages/FTMSKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/FTMSKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F0F0F0F00000000000000091 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.10.0;
+			};
+		};
+		F0F0F0F00000000000000097 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F0F0F0F00000000000000092 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F0F0F0F00000000000000091 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+		F0F0F0F00000000000000095 /* FTMSKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FTMSKit;
+		};
+		F0F0F0F00000000000000098 /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F0F0F0F00000000000000097 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
+			productName = KeyboardShortcuts;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = F0F0F0F00000000000000050 /* Project object */;
+}

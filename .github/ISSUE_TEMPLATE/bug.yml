@@ -1,0 +1,47 @@
+name: Problème
+description: Signaler un dysfonctionnement de Foulée
+labels: [bug]
+body:
+  - type: textarea
+    id: probleme
+    attributes:
+      label: Ce qui se passe
+      description: Ce que vous constatez, et ce que vous attendiez.
+    validations:
+      required: true
+  - type: textarea
+    id: etapes
+    attributes:
+      label: Étapes pour reproduire
+      placeholder: |
+        1. Démarrer le tapis depuis Foulée
+        2. Appuyer sur +
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version de Foulée
+      description: Affichée en bas du menu de Foulée.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: Version de macOS
+      placeholder: "macOS 27.0"
+    validations:
+      required: true
+  - type: input
+    id: tapis
+    attributes:
+      label: Tapis
+      placeholder: "Marque, modèle, nom Bluetooth (FS-…)"
+  - type: textarea
+    id: diagnostic
+    attributes:
+      label: Diagnostic
+      description: Menu de Foulée › Diagnostic… › « Copier le diagnostic », puis coller ici.
+      render: text

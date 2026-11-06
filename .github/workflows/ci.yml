@@ -1,0 +1,45 @@
+# Vérifications obligatoires avant toute fusion dans main : formatage, tests, compilation stricte.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    name: Formatage (swift format)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Sélectionner la version d'Xcode la plus récente
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+      - name: Vérifier le formatage et les règles de style
+        run: scripts/lint.sh
+
+  tests:
+    name: Tests (FTMSKit)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Sélectionner la version d'Xcode la plus récente
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+      - name: Tests (avertissements bloquants, puis sous Address Sanitizer)
+        run: scripts/test.sh
+
+  build:
+    name: Compilation de l'app (avertissements bloquants)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Sélectionner la version d'Xcode la plus récente
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+      - name: Compiler
+        run: FOULEE_ADHOC=1 ./build.sh
