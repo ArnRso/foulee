@@ -70,6 +70,25 @@ iCloud ni entitlement, ce qui reste compatible avec la signature ad hoc des rele
   de connexion ne la coupent pas.
 - Le fichier contient les totaux (distance, temps de marche, énergie, vitesses moyenne et
   maximale) et un relevé par seconde. Il est sauvegardé toutes les 30 secondes pendant la marche.
+- Format compact (version 3) : JSON sans indentation, relevés rangés en colonnes
+  (`sampleColumns` : un tableau par mesure), environ 120 Ko par heure de marche. Les fichiers
+  des versions précédentes sont relus, et réécrits au format compact à leur première lecture.
+
+### Pourquoi des fichiers JSON et pas une base SQLite
+
+iCloud Drive synchronise des fichiers entiers, sans rien savoir de leur contenu : une base
+SQLite modifiée sur place (avec ses fichiers `-wal` et `-shm`) peut être corrompue par une
+synchronisation au milieu d'une écriture ou par deux Mac qui l'écrivent, et toutes les séances
+seraient perdues. Un fichier par séance, écrit d'un bloc, ne risque au pire qu'un conflit sur
+une seule séance, et reste lisible par n'importe quel outil.
+
+### Index local
+
+Les totaux de chaque séance sont gardés dans un index, dans les caches de l'app
+(`~/Library/Caches/com.arnrso.foulee/index.json`, jamais synchronisé : chaque Mac a le sien).
+À l'ouverture des statistiques, seuls les fichiers nouveaux ou modifiés (date et taille) sont
+décodés ; les relevés d'une séance ne sont lus qu'à l'ouverture de son détail. L'index peut
+être supprimé sans risque : il est reconstruit à la lecture suivante.
 - Une séance interrompue par la fermeture de Foulée est enregistrée avec `isInterrupted`.
 - Les séances de moins de 10 m et d'une minute ne sont pas conservées.
 - Le fichier contient aussi les événements (démarrage, pause, arrêt, consignes de vitesse
@@ -78,7 +97,7 @@ iCloud ni entitlement, ce qui reste compatible avec la signature ad hoc des rele
 
 ### Statistiques
 
-Menu › Statistiques… ouvre une fenêtre qui relit toutes les séances du dossier :
+Menu › Statistiques… ouvre une fenêtre qui présente toutes les séances du dossier :
 
 - **Vue d'ensemble** : totaux d'aujourd'hui, de la semaine, du mois et depuis le début ;
   histogramme par jour (30 derniers), semaine ou mois (12 derniers) de la distance, du temps,

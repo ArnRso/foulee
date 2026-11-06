@@ -17,13 +17,13 @@ struct StatisticsView: View {
 
     /// Séances enregistrées, sans la sauvegarde intermédiaire de la séance en cours (même
     /// identifiant), remplacée par sa version en direct.
-    private var savedSessions: [TreadmillSession] {
+    private var savedSessions: [SessionSummary] {
         guard let live = treadmill.liveSession else { return store.sessions }
         return store.sessions.filter { $0.id != live.id }
     }
 
-    private var allSessions: [TreadmillSession] {
-        (treadmill.liveSession.map { [$0] } ?? []) + savedSessions
+    private var allSessions: [SessionSummary] {
+        (treadmill.liveSession.map { [$0.summary] } ?? []) + savedSessions
     }
 
     var body: some View {
@@ -33,7 +33,7 @@ struct StatisticsView: View {
                     .tag(Selection.overview)
                 if let live = treadmill.liveSession {
                     Section("En cours") {
-                        SessionRow(session: live, isLive: true)
+                        SessionRow(session: live.summary, isLive: true)
                             .tag(Selection.session(live.id))
                     }
                 }
@@ -51,13 +51,12 @@ struct StatisticsView: View {
         } detail: {
             switch selection {
             case .session(let id):
-                // Une séance qui se termine garde son identifiant : la vue passe sans saut
-                // de la version en direct à la version enregistrée.
-                if let session = allSessions.first(where: { $0.id == id }) {
-                    SessionDetailView(
-                        session: session,
-                        isLive: session.id == treadmill.liveSession?.id,
-                    )
+                // Une séance qui se termine garde son identifiant : la vue passe de la version
+                // en direct à la version enregistrée.
+                if let live = treadmill.liveSession, live.id == id {
+                    SessionDetailView(session: live, isLive: true)
+                } else if let summary = savedSessions.first(where: { $0.id == id }) {
+                    StoredSessionDetailView(summary: summary, store: store)
                 } else {
                     ContentUnavailableView("Séance introuvable", systemImage: "questionmark")
                 }
@@ -94,7 +93,7 @@ struct StatisticsView: View {
 }
 
 private struct SessionRow: View {
-    let session: TreadmillSession
+    let session: SessionSummary
     let isLive: Bool
 
     var body: some View {
@@ -194,7 +193,7 @@ extension StatisticsPeriod {
 }
 
 private struct OverviewView: View {
-    let sessions: [TreadmillSession]
+    let sessions: [SessionSummary]
     @State private var period = StatisticsPeriod.day
     @State private var metric = Metric.distance
 
@@ -322,6 +321,39 @@ private struct PeriodTable: View {
 }
 
 // MARK: - Détail d'une séance
+
+/// Détail d'une séance enregistrée : ses relevés ne sont lus qu'à l'ouverture.
+private struct StoredSessionDetailView: View {
+    let summary: SessionSummary
+    let store: SessionStore
+    @State private var session: TreadmillSession?
+    @State private var error: String?
+
+    var body: some View {
+        Group {
+            if let session, session.id == summary.id {
+                SessionDetailView(session: session, isLive: false)
+            } else if let error {
+                ContentUnavailableView(
+                    "Séance illisible",
+                    systemImage: "exclamationmark.triangle",
+                    description: Text(error),
+                )
+            } else {
+                ProgressView()
+            }
+        }
+        .task(id: summary) {
+            error = nil
+            do {
+                session = try await store.loadSession(summary)
+            } catch {
+                self.error =
+                    "\(error.localizedDescription)\nSi la séance est dans iCloud, son téléchargement vient d'être demandé : réessayez dans un instant."
+            }
+        }
+    }
+}
 
 /// Ligne de la chronologie : changement de vitesse lu dans les relevés, ou événement.
 private struct TimelineEntry: Identifiable {

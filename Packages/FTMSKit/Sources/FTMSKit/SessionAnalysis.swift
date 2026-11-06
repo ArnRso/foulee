@@ -104,11 +104,56 @@ public struct PeriodSummary: Equatable, Identifiable, Sendable {
         elapsedSeconds > 0 ? Double(distanceMeters) / Double(elapsedSeconds) * 3.6 : 0
     }
 
-    mutating func add(_ session: TreadmillSession) {
+    mutating func add(_ session: SessionSummary) {
         sessionCount += 1
         distanceMeters += session.distanceMeters
         elapsedSeconds += session.elapsedSeconds
         energyKcal += session.energyKcal ?? 0
+    }
+}
+
+/// Totaux d'une séance, sans ses relevés : ce que garde l'index des séances et ce qu'utilisent
+/// les statistiques.
+public struct SessionSummary: Codable, Equatable, Identifiable, Sendable {
+    /// Identifiant de la séance.
+    public var id: UUID
+    /// Nom Bluetooth du tapis.
+    public var deviceName: String?
+    /// Début de la séance.
+    public var startDate: Date
+    /// Fin de la séance.
+    public var endDate: Date
+    /// Temps de marche, en secondes.
+    public var elapsedSeconds: Int
+    /// Distance, en mètres.
+    public var distanceMeters: Int
+    /// Énergie, en kcal.
+    public var energyKcal: Int?
+    /// Vitesse maximale, en km/h.
+    public var maximumSpeedKmh: Double
+    /// Séance terminée par la fermeture de l'app plutôt que par un arrêt du tapis.
+    public var isInterrupted: Bool
+
+    /// Vitesse moyenne sur le temps de marche, en km/h.
+    public var averageSpeedKmh: Double {
+        elapsedSeconds > 0 ? Double(distanceMeters) / Double(elapsedSeconds) * 3.6 : 0
+    }
+}
+
+extension TreadmillSession {
+    /// Totaux de la séance, sans ses relevés.
+    public var summary: SessionSummary {
+        SessionSummary(
+            id: id,
+            deviceName: deviceName,
+            startDate: startDate,
+            endDate: endDate,
+            elapsedSeconds: elapsedSeconds,
+            distanceMeters: distanceMeters,
+            energyKcal: energyKcal,
+            maximumSpeedKmh: maximumSpeedKmh,
+            isInterrupted: isInterrupted,
+        )
     }
 }
 
@@ -117,7 +162,7 @@ public enum SessionStatistics {
     /// Totaux des `count` dernières périodes jusqu'à celle qui contient `date`, de la plus
     /// ancienne à la plus récente, périodes vides comprises (pour des graphiques continus).
     public static func summaries(
-        of sessions: [TreadmillSession],
+        of sessions: [SessionSummary],
         by period: StatisticsPeriod,
         count: Int,
         endingAt date: Date,
@@ -141,7 +186,7 @@ public enum SessionStatistics {
     }
 
     /// Totaux de toutes les séances.
-    public static func total(of sessions: [TreadmillSession]) -> PeriodSummary {
+    public static func total(of sessions: [SessionSummary]) -> PeriodSummary {
         var summary = PeriodSummary(start: sessions.map(\.startDate).min() ?? .distantPast)
         for session in sessions {
             summary.add(session)
